@@ -1,0 +1,40 @@
+/* Tiêu đề chính */
+.custom-title {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 26px;
+    font-weight: 600;
+}
+
+/* Header của bảng */
+.area-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Các nút hành động */
+.button-level1 {
+    display: flex;
+    gap: 6px;
+}
+
+/* Cập nhật các nút hành động */
+.button-level1 .ant-btn {
+    font-size: 14px;
+    font-weight: 600;
+    height: 35px;
+    padding: 0 12px;
+    border-radius: 6px;
+    background-color: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.3s;
+}
+
+/* Nút hành động khi hover */
+.button-level1 .ant-btn:hover {
+    background-color: #0056b3;
+}

@@ -1,0 +1,391 @@
+/* Global Styles */
+body {
+    background-color: #f0f8ff;
+    /* Lighter background color for a clean medical feel */
+    font-family: 'Arial', sans-serif;
+    /* Simpler, clean font for medical theme */
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Header Styles */
+header {
+    background-color: #0062cc;
+    width: 100%;
+    height: 80px;
+    /* Đặt chiều cao cụ thể */
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    /* Align items vertically */
+    justify-content: space-between;
+    /* Space between logo and navigation */
+    color: white;
+}
+
+/* Logo Container */
+.logo-container {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    /* Loại bỏ khoảng cách */
+    padding: 0;
+    /* Loại bỏ khoảng cách */
+}
+
+.logo {
+    height: 80px;
+    /* Chiều cao bằng với container header */
+    width: auto;
+    /* Giữ tỷ lệ hình ảnh */
+    margin: 0;
+    /* Loại bỏ khoảng cách */
+    position: absolute;
+    /* Đảm bảo logo sát bên mép trái */
+    top: 0;
+    /* Căn sát mép trên */
+    left: 0;
+    /* Căn sát mép trái */
+}
+
+/* Header Title */
+header h1 {
+    font-size: 36px;
+    margin: 0;
+}
+
+/* Navigation Styles */
+header nav {
+    margin-top: 10px;
+}
+
+header nav a {
+    text-decoration: none;
+    color: white;
+    margin: 0 15px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+header nav a:hover {
+    color: #ffd700;
+}
+
+/* Hero Section */
+.hero {
+    text-align: center;
+    padding: 40px;
+    background-color: #f8f9fa;
+}
+
+.hero h2 {
+    font-size: 48px;
+    color: #000000;
+}
+
+.hero p {
+    font-size: 30px;
+    color: #000000;
+    margin-bottom: 20px;
+}
+
+.cta-button {
+    padding: 10px 20px;
+    background-color: #0062cc;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    border-radius: 5px;
+}
+
+.cta-button:hover {
+    background-color: #0056b3;
+}
+
+/* Features Section */
+.features {
+    display: flex;
+    justify-content: space-around;
+    padding: 50px 0;
+    background-color: #ffffff;
+    width: 100%;
+}
+
+.feature-card {
+    width: 30%;
+    text-align: center;
+    background-color: #e9ecef;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.feature-card h3 {
+    font-size: 22px;
+    margin-bottom: 15px;
+}
+
+.feature-card p {
+    font-size: 16px;
+    color: #555;
+}
+
+/* Products Section */
+.products {
+    display: flex;
+    justify-content: space-around;
+    /* Căn đều khoảng cách giữa các container */
+    align-items: center;
+    padding: 30px 0;
+    background-color: #f0f8ff;
+    width: 100%;
+}
+
+/* Center Product (Existing) */
+.product-intro {
+    width: 30%;
+    /* Giảm bớt chiều rộng */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.product-intro img {
+    width: 100%;
+    /* Chiếm toàn bộ chiều rộng container */
+    height: auto;
+    /* Giữ tỷ lệ ảnh */
+    border-radius: 10px;
+    /* Bo góc ảnh */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    /* Đổ bóng */
+}
+
+/* Side Products (New) */
+.product-side {
+    width: 20%;
+    /* Giảm chiều rộng để cân đối với phần giữa */
+    display: flex;
+    justify-content: center;
+    /* Căn giữa ảnh */
+    align-items: center;
+}
+
+.product-side img {
+    width: 100%;
+    /* Chiếm toàn bộ chiều rộng container */
+    height: auto;
+    /* Giữ tỷ lệ ảnh */
+    border-radius: 10px;
+    /* Bo góc ảnh */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    /* Đổ bóng */
+}
+
+/* Contact & Footer Section */
+.contact-footer {
+    transform: translateY(-50px);
+    display: flex;
+    /* Flexbox để căn ngang */
+    justify-content: space-evenly;
+    /* Khoảng cách đều nhau */
+    align-items: stretch;
+    /* Đảm bảo cả hai container có chiều cao bằng nhau */
+    padding: 20px;
+    /* Tạo khoảng cách xung quanh */
+    gap: 20px;
+    /* Khoảng cách giữa Contact và Footer */
+    background-color: #f9fafc;
+    /* Màu nền tổng thể */
+}
+
+/* Contact Section */
+.contact {
+    flex: 1;
+    /* Cả hai container sẽ chia đều không gian */
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    /* Đảm bảo các thành phần xếp dọc */
+    justify-content: space-between;
+    /* Tách đều các phần tử bên trong */
+}
+
+.contact form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    /* Khoảng cách giữa các input */
+}
+
+.contact button {
+    align-self: flex-start;
+    /* Căn nút về phía trái */
+    padding: 10px 20px;
+    background-color: #0062cc;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.contact button:hover {
+    background-color: #0056b3;
+}
+
+/* Contact Section */
+.contact {
+    flex: 1;
+    /* Chia đều không gian */
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    /* Các thành phần xếp dọc */
+    gap: 15px;
+    /* Tạo khoảng cách giữa các phần tử */
+    justify-content: flex-start;
+    /* Đưa nội dung lên đầu container */
+    align-items: center;
+    /* Căn giữa các phần tử theo chiều ngang */
+}
+
+.contact h3 {
+    margin: 0;
+    /* Loại bỏ khoảng cách mặc định */
+    font-size: 24px;
+    text-align: center;
+    color: #000;
+    /* Giữ chữ đậm màu cho tiêu đề */
+}
+
+.contact form {
+    display: flex;
+    flex-direction: column;
+    /* Các thành phần form xếp dọc */
+    gap: 10px;
+    /* Khoảng cách giữa các trường */
+    width: 100%;
+    /* Đảm bảo form chiếm hết chiều rộng */
+    max-width: 400px;
+    /* Giới hạn chiều rộng tối đa */
+}
+
+.contact input,
+.contact textarea {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.contact textarea {
+    resize: none;
+    /* Tắt tính năng thay đổi kích thước */
+}
+
+.contact button {
+    align-self: flex-start;
+    /* Căn nút về phía trái */
+    padding: 10px 20px;
+    background-color: #0062cc;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.contact button:hover {
+    background-color: #0056b3;
+}
+
+/* Footer Section */
+.footer {
+    flex: 1;
+    /* Chia đều không gian */
+    padding: 20px;
+    background-color: #0062cc;
+    color: white;
+    /* Đổi màu chữ thành trắng */
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    /* Các đoạn văn trong Footer xếp dọc */
+    justify-content: center;
+    /* Căn giữa nội dung */
+    text-align: left;
+    /* Canh trái nội dung */
+}
+
+.footer-info p {
+    margin: 5px 0;
+    /* Khoảng cách giữa các đoạn văn */
+    color: white;
+    /* Đảm bảo chữ Footer cũng màu trắng */
+}
+
+.footer a {
+    text-decoration: none;
+    color: #ffd700;
+    font-weight: bold;
+}
+
+.footer a:hover {
+    color: #ffcc00;
+}
+
+/* Language selector styling */
+.language-buttons {
+    display: inline-flex;
+    margin-left: 10px;
+    align-items: center;
+}
+
+.lang-btn {
+    padding: 4px 8px;
+    margin: 0 2px;
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.lang-btn.active {
+    background-color: #41cc00;
+    color: white;
+    border-color: #f7f7f7;
+}
+
+.lang-btn:hover:not(.active) {
+    background-color: #f0f0f0;
+}
+
+/* Make sure nav items are aligned properly */
+nav {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+@media (max-width: 768px) {
+    nav {
+        flex-wrap: wrap;
+    }
+
+    .language-buttons {
+        margin-top: 10px;
+    }
+}

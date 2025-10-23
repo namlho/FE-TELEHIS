@@ -1,0 +1,117 @@
+@import 'antd/dist/antd.css';
+
+/* Tổng thể */
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: #f0f2f5;
+}
+
+/* Style cho Header */
+.site-layout-background {
+  background: #051e55 !important;
+  /* Màu nền giống yêu cầu */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Logo */
+.logo {
+  color: #fff !important;
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+
+.logo:hover {
+  color: #1890ff !important;
+}
+
+/* Style cho Menu trên Header */
+.header-menu.ant-menu-horizontal {
+  line-height: 64px;
+  background: transparent !important;
+}
+
+.header-menu.ant-menu-horizontal>.ant-menu-item,
+.header-menu.ant-menu-horizontal>.ant-menu-submenu {
+  color: #fff !important;
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0 15px;
+  padding: 0 10px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+/* Đảm bảo chữ trong NavLink cũng là màu trắng */
+.header-menu.ant-menu-horizontal>.ant-menu-item a,
+.header-menu.ant-menu-horizontal>.ant-menu-submenu a {
+  color: #fff !important;
+  text-decoration: none;
+}
+
+/* Hover và selected */
+.header-menu.ant-menu-horizontal>.ant-menu-item:hover,
+.header-menu.ant-menu-horizontal>.ant-menu-submenu:hover,
+.header-menu.ant-menu-horizontal>.ant-menu-item-active,
+.header-menu.ant-menu-horizontal>.ant-menu-submenu-active,
+.header-menu.ant-menu-horizontal>.ant-menu-item-open,
+.header-menu.ant-menu-horizontal>.ant-menu-submenu-open,
+.header-menu.ant-menu-horizontal>.ant-menu-item-selected,
+.header-menu.ant-menu-horizontal>.ant-menu-submenu-selected {
+  color: #1890ff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-bottom: none !important;
+}
+
+/* Đảm bảo chữ trong NavLink cũng đổi màu khi hover/selected */
+.header-menu.ant-menu-horizontal>.ant-menu-item:hover a,
+.header-menu.ant-menu-horizontal>.ant-menu-submenu:hover a,
+.header-menu.ant-menu-horizontal>.ant-menu-item-active a,
+.header-menu.ant-menu-horizontal>.ant-menu-submenu-active a,
+.header-menu.ant-menu-horizontal>.ant-menu-item-open a,
+.header-menu.ant-menu-horizontal>.ant-menu-submenu-open a,
+.header-menu.ant-menu-horizontal>.ant-menu-item-selected a,
+.header-menu.ant-menu-horizontal>.ant-menu-submenu-selected a {
+  color: #1890ff !important;
+}
+
+/* Style cho Avatar */
+.ant-avatar-lg.ant-avatar-icon {
+  font-size: 10px;
+  background: #1890ff;
+  border: 2px solid #fff;
+  transition: all 0.3s ease;
+}
+
+.ant-avatar-lg.ant-avatar-icon:hover {
+  background: #40a9ff;
+}
+
+/* Style cho nội dung bên dưới */
+.site-layout .site-layout-background {
+  background: #fff !important;
+  /* Ghi đè màu nền */
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 24px;
+}
+
+[data-theme='dark'] .site-layout .site-layout-background {
+  background: #c71717 !important;
+}
+
+/* Style cho Footer */
+.ant-layout-footer {
+  background: #051e55 !important;
+  color: #fff !important;
+  padding: 16px 0 !important;
+}
+
+.ant-layout-footer h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #ffffff;
+  /* Text color set to white */
+}

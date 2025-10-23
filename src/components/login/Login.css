@@ -1,0 +1,97 @@
+/* Tạo background gradient cho toàn bộ trang */
+.login-wrapper {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-image: url("./background.jpg");
+}
+
+/* Container chứa form login với nền trắng, bo tròn và đổ bóng */
+.login-container {
+  background: transparent;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  width: 450px;
+  text-align: center;
+}
+
+/* Tiêu đề */
+.login-title {
+  margin-bottom: 24px;
+  font-size: 28px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* Các item của form có khoảng cách hợp lý */
+.login-form .ant-form-item {
+  margin-bottom: 16px;
+}
+
+/* Tùy chỉnh style cho input */
+.login-input {
+  background: transparent !important;
+  color: transparent !important;
+  text-shadow: 0 0 0 white !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  padding: 10px;
+  border-radius: 30px;
+  font-size: 16px;
+  outline: none !important;
+}
+
+.login-input::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.login-input:focus {
+  border-color: white !important;
+}
+
+/* Nút Login với kích thước và font chữ đẹp */
+.login-button {
+  height: 40px;
+  font-size: 16px;
+  border-radius: 30px;
+  background: white !important;
+  color: black !important;
+  border: none !important;
+  padding: 10px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.login-button:hover {
+  opacity: 0.8;
+}
+
+.login-button:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Canh lề cho checkbox */
+.checkbox-item {
+  text-align: left;
+}
+
+.checkbox-item label {
+  color: white !important;
+}
+
+/* Đảm bảo Ant Design styles không ghi đè */
+.ant-input,
+.ant-input-password {
+  background: transparent !important;
+  color: white !important;
+}
+
+.ant-input:focus,
+.ant-input-password:focus {
+  border-color: white !important;
+  box-shadow: none;
+}

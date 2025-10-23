@@ -1,0 +1,78 @@
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+  
+  .ant-pagination {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 14px;
+  }
+  
+  /* Tất cả nút đều bo tròn */
+  .ant-pagination-item,
+  .ant-pagination-prev,
+  .ant-pagination-next,
+  .ant-pagination-jump-prev,
+  .ant-pagination-jump-next,
+  .ant-pagination-item-link {
+    border-radius: 8px !important;
+    border: 1px solid #d9d9d9;
+    min-width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    background-color: white;
+  }
+  
+  /* Nút số */
+  .ant-pagination-item a {
+    color: #333;
+    font-weight: 500;
+  }
+  
+  /* Hover */
+  .ant-pagination-item:hover,
+  .ant-pagination-prev:hover .ant-pagination-item-link,
+  .ant-pagination-next:hover .ant-pagination-item-link,
+  .ant-pagination-jump-prev:hover .ant-pagination-item-link,
+  .ant-pagination-jump-next:hover .ant-pagination-item-link {
+    background-color: #f0faff;
+    border-color: #40a9ff;
+  }
+  
+  /* Nút đang active */
+  .ant-pagination-item-active {
+    background-color: #1890ff;
+    border-color: #1890ff;
+  }
+  
+  .ant-pagination-item-active a {
+    color: white;
+  }
+  
+  /* Tổng và dropdown */
+  .ant-pagination-options {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+  }
+  
+  .ant-pagination-total-text {
+    font-weight: 500;
+    color: #595959;
+  }
+  
+  .ant-select-selector {
+    border-radius: 8px !important;
+  }
+  
