@@ -23,6 +23,9 @@ export default function XuongKhop() {
     const [rows, setRows] = useState([]);              // dữ liệu bảng bệnh nhân (đã unique theo id_patient)
     const [rawImages, setRawImages] = useState([]);    // dữ liệu ảnh MSK (để tính toán nhanh)
     const [loading, setLoading] = useState(false);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(20);
+    const [total, setTotal] = useState(0);
 
     const [imageModal, setImageModal] = useState(false);
     const [imageLoading, setImageLoading] = useState(false);
@@ -63,6 +66,13 @@ export default function XuongKhop() {
         { title: 'Giới tính', dataIndex: 'gender', key: 'gender', width: 100 },
         { title: 'SĐT', dataIndex: 'phone_number', key: 'phone_number', width: 140 },
         { title: 'Địa chỉ', dataIndex: 'address', key: 'address' },
+        {
+            title: 'Ngày tạo',
+            dataIndex: 'created_at',
+            key: 'created_at',
+            width: 200,
+            render: (val) => val ? dayjs(val).format('HH:mm DD/MM/YYYY') : ''
+        },
         {
             title: 'Thao tác',
             key: 'thaoTac',
@@ -106,24 +116,33 @@ export default function XuongKhop() {
     ]), []);
 
     // Build params cho API /images
-    const buildQueryParams = useCallback(() => {
+    const buildQueryParams = useCallback((p = page, ps = pageSize) => {
         const params = {
-            disease_code: DISEASE_CODE,      // chỉ lấy ảnh Xương khớp
-            page: 1,
-            page_size: 500,                  // đủ lớn cho danh sách hiện tại; có thể thêm phân trang nếu dữ liệu rất lớn
+            disease_code: DISEASE_CODE,
+            page: p,
+            page_size: ps,
         };
         if (searchId) params.id_patient = searchId.trim();
-        if (fromDate) params.from = dayjs(fromDate).toISOString();
-        if (toDate) params.to = dayjs(toDate).endOf('day').toISOString();
-        // nếu mai sau BE hỗ trợ phòng khám thì thêm params.clinic = clinic
+        if (fromDate) {
+            const fromIso = dayjs(fromDate).toISOString();
+            params.from = fromIso;
+            params.from_date = dayjs(fromDate).format('YYYY-MM-DD');
+            params.from_ts = dayjs(fromDate).startOf('day').valueOf();
+        }
+        if (toDate) {
+            const toIso = dayjs(toDate).endOf('day').toISOString();
+            params.to = toIso;
+            params.to_date = dayjs(toDate).format('YYYY-MM-DD');
+            params.to_ts = dayjs(toDate).endOf('day').valueOf();
+        }
         return params;
-    }, [searchId, fromDate, toDate /*, clinic*/]);
+    }, [searchId, fromDate, toDate, page, pageSize]);
 
     // Lấy danh sách ảnh ENDO và rút gọn thành danh sách bệnh nhân duy nhất
-    const fetchPatients = useCallback(async () => {
+    const fetchPatients = useCallback(async (p = page, ps = pageSize) => {
         setLoading(true);
         try {
-            const params = buildQueryParams();
+            const params = buildQueryParams(p, ps);
             // Debug: log params sent to backend
             console.debug('[ECG] fetchPatients - params ->', params);
             const res = await axios.get(`${BASE_URL}/images`, { params });
@@ -134,6 +153,9 @@ export default function XuongKhop() {
 
             // Lưu raw ảnh (đã là ENDO)
             setRawImages(data);
+            // try to read total from backend
+            const totalCount = res.data?.total ?? res.data?.meta?.total ?? (res.headers && (res.headers['x-total-count'] ? parseInt(res.headers['x-total-count'], 10) : undefined)) ?? 0;
+            setTotal(Number(totalCount || 0));
 
             // Rút gọn ra danh sách bệnh nhân duy nhất
             const map = new Map();
@@ -149,6 +171,7 @@ export default function XuongKhop() {
                         gender: p.gender,
                         phone_number: p.phone_number,
                         address: p.address, // nếu muốn hiện address, cần BE trả thêm; tạm lấy từ patients endpoint nếu cần
+                        created_at: p.created_at || p.createdAt || null,
                     });
                 }
             }
@@ -172,6 +195,7 @@ export default function XuongKhop() {
                             phone_number: p.phone_number,
                             address: p.address || '',
                             primary_disease_code: p.primary_disease_code || null,
+                            created_at: p.created_at || p.createdAt || null,
                         });
                     }
                 }
@@ -208,6 +232,14 @@ export default function XuongKhop() {
             setLoading(false);
         }
     }, [buildQueryParams, searchKeyword]);
+
+    const handleTableChange = (pagination) => {
+        const nextPage = pagination?.current || 1;
+        const nextSize = pagination?.pageSize || pageSize;
+        setPage(nextPage);
+        setPageSize(nextSize);
+        fetchPatients(nextPage, nextSize);
+    };
 
     useEffect(() => {
         fetchPatients();
@@ -340,6 +372,20 @@ export default function XuongKhop() {
         return ''; // unknown
     };
 
+    // Infer mime type from base64 signature (used when file.type is empty)
+    const inferMimeFromBase64 = (base64, mime) => {
+        if (!base64) return '';
+        if (mime) return mime;
+        const head = base64.slice(0, 12);
+        if (head.startsWith('/9j') || head.startsWith('/9j/')) return 'image/jpeg';
+        if (head.startsWith('iVBORw0KG')) return 'image/png';
+        if (head.startsWith('R0lGOD')) return 'image/gif';
+        if (head.startsWith('Qk')) return 'image/bmp';
+        if (head.startsWith('SUkq')) return 'image/tiff';
+        if (head.startsWith('UklGR')) return 'image/webp';
+        return '';
+    };
+
     // Sanitize filename and ensure an extension exists (append inferred ext when missing)
     const sanitizeFilename = (name = '', mime = '', base64 = '') => {
         // preserve the original name for logging
@@ -377,11 +423,13 @@ export default function XuongKhop() {
         try {
             const fileData = await readFileAsBase64(file);
             const sanitized = sanitizeFilename(file.name, file.type, fileData);
-            const dataUri = `data:${file.type || 'image/jpeg'};base64,${fileData}`;
+            const inferredMime = file.type || inferMimeFromBase64(fileData, file.type) || 'image/jpeg';
+            const dataUri = `data:${inferredMime};base64,${fileData}`;
             const payload = {
                 id_patient: selectedPatient,
                 filename: sanitized,
                 original_filename: file.name,
+                file_mime: inferredMime,
                 file_data: fileData,
                 file_data_uri: dataUri,
                 disease_code: DISEASE_CODE,
@@ -416,11 +464,13 @@ export default function XuongKhop() {
         try {
             const fileData = await readFileAsBase64(file);
             const sanitized = sanitizeFilename(file.name, file.type, fileData);
-            const dataUri = `data:${file.type || 'image/jpeg'};base64,${fileData}`;
+            const inferredMime = file.type || inferMimeFromBase64(fileData, file.type) || 'image/jpeg';
+            const dataUri = `data:${inferredMime};base64,${fileData}`;
             const payload = {
                 id_patient,
                 filename: sanitized,
                 original_filename: file.name,
+                file_mime: inferredMime,
                 file_data: fileData,
                 file_data_uri: dataUri,
                 disease_code: DISEASE_CODE,
@@ -589,17 +639,6 @@ export default function XuongKhop() {
                     <DatePicker style={{ width: 140 }} value={toDate} onChange={onChangeTo} />
                 </div>
                 <div>
-                    <span>Phòng khám&nbsp;</span>
-                    <Select
-                        placeholder="Chọn..."
-                        style={{ width: 160 }}
-                        value={clinic}
-                        onChange={setClinic}
-                        options={[
-                            // Tuỳ backend: thêm options thật nếu có
-                            // { value: 'A', label: 'Phòng khám A' },
-                        ]}
-                    />
                 </div>
                 <div>
                     <span>Từ khóa (F3)&nbsp;</span>
@@ -658,7 +697,8 @@ export default function XuongKhop() {
                 columns={columns}
                 dataSource={rows}
                 loading={loading}
-                pagination={false}
+                pagination={{ current: page, pageSize, total, showSizeChanger: true, pageSizeOptions: ['10', '20', '50', '100'] }}
+                onChange={handleTableChange}
                 style={{ marginTop: 0 }}
                 locale={{
                     emptyText: (
@@ -694,7 +734,7 @@ export default function XuongKhop() {
                 ) : images.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: 40 }}>
                         <img src="https://cdn-icons-png.flaticon.com/512/2748/2748558.png" alt="empty" width={60} />
-                        <div style={{ marginTop: 8 }}>Không có ảnh Xương Khớp</div>
+                        <div style={{ marginTop: 8 }}>Không có ảnh Điện tim</div>
                     </div>
                 ) : (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
@@ -729,7 +769,7 @@ export default function XuongKhop() {
                     >
                         <p className="ant-upload-drag-icon">📤</p>
                         <p className="ant-upload-text">Kéo thả ảnh vào đây hoặc nhấn để chọn</p>
-                        <p className="ant-upload-hint">Ảnh sẽ được gán tự động cho bệnh nhân đang chọn với loại bệnh Xương Khớp</p>
+                        <p className="ant-upload-hint">Ảnh sẽ được gán tự động cho bệnh nhân đang chọn với loại bệnh Điện tim</p>
                     </Upload.Dragger>
                 </div>
             </Modal>

@@ -23,6 +23,9 @@ export default function NoiSoi() {
     const [rows, setRows] = useState([]);              // dữ liệu bảng bệnh nhân (đã unique theo id_patient)
     const [rawImages, setRawImages] = useState([]);    // dữ liệu ảnh ENDO (để tính toán nhanh)
     const [loading, setLoading] = useState(false);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(20);
+    const [total, setTotal] = useState(0);
 
     const [imageModal, setImageModal] = useState(false);
     const [imageLoading, setImageLoading] = useState(false);
@@ -63,6 +66,13 @@ export default function NoiSoi() {
         { title: 'Giới tính', dataIndex: 'gender', key: 'gender', width: 100 },
         { title: 'SĐT', dataIndex: 'phone_number', key: 'phone_number', width: 140 },
         { title: 'Địa chỉ', dataIndex: 'address', key: 'address' },
+        {
+            title: 'Ngày tạo',
+            dataIndex: 'created_at',
+            key: 'created_at',
+            width: 180,
+            render: d => d ? dayjs(d).format('HH:mm DD/MM/YYYY') : ''
+        },
         {
             title: 'Thao tác',
             key: 'thaoTac',
@@ -106,30 +116,51 @@ export default function NoiSoi() {
     ]), []);
 
     // Build params cho API /images
-    const buildQueryParams = useCallback(() => {
+    const buildQueryParams = useCallback((p = page, ps = pageSize) => {
         const params = {
             disease_code: DISEASE_CODE,      // chỉ lấy ảnh Nội soi
-            page: 1,
-            page_size: 500,                  // đủ lớn cho danh sách hiện tại; có thể thêm phân trang nếu dữ liệu rất lớn
+            page: p || 1,
+            page_size: ps || 20,
         };
         if (searchId) params.id_patient = searchId.trim();
-        if (fromDate) params.from = dayjs(fromDate).toISOString();
-        if (toDate) params.to = dayjs(toDate).endOf('day').toISOString();
+        if (fromDate) {
+            const fromIso = dayjs(fromDate).toISOString();
+            params.from = fromIso;
+            params.from_date = dayjs(fromDate).format('YYYY-MM-DD');
+            params.from_ts = dayjs(fromDate).startOf('day').valueOf();
+        }
+        if (toDate) {
+            const toIso = dayjs(toDate).endOf('day').toISOString();
+            params.to = toIso;
+            params.to_date = dayjs(toDate).format('YYYY-MM-DD');
+            params.to_ts = dayjs(toDate).endOf('day').valueOf();
+        }
         // nếu mai sau BE hỗ trợ phòng khám thì thêm params.clinic = clinic
         return params;
     }, [searchId, fromDate, toDate /*, clinic*/]);
 
     // Lấy danh sách ảnh ENDO và rút gọn thành danh sách bệnh nhân duy nhất
-    const fetchPatients = useCallback(async () => {
+    const fetchPatients = useCallback(async (p = page, ps = pageSize) => {
         setLoading(true);
         try {
-            const params = buildQueryParams();
+            const params = buildQueryParams(p, ps);
+            console.debug('[ENDO] fetchPatients - params ->', params);
             const res = await axios.get(`${BASE_URL}/images`, { params });
-            // res.data: { page, page_size, total, data: [...] }
-            const data = Array.isArray(res.data?.data) ? res.data.data : [];
+            console.debug('[ENDO] fetchPatients - response status:', res.status);
+            // res.data: { page, page_size, total, data: [...] } OR an array
+            const data = Array.isArray(res.data?.data) ? res.data.data : (Array.isArray(res.data) ? res.data : []);
+            console.debug('[ENDO] fetchPatients - data length:', Array.isArray(data) ? data.length : 0);
 
             // Lưu raw ảnh (đã là ENDO)
             setRawImages(data);
+
+            // try to obtain total count from response
+            const totalFromBody = res.data?.total || res.data?.meta?.total;
+            const totalHeader = parseInt(res.headers?.['x-total-count'] || '', 10) || undefined;
+            const finalTotal = typeof totalFromBody === 'number' && !Number.isNaN(totalFromBody) ? totalFromBody : (typeof totalHeader === 'number' ? totalHeader : (Array.isArray(data) ? data.length : 0));
+            setTotal(finalTotal || 0);
+            setPage(p || 1);
+            setPageSize(ps || pageSize);
 
             // Rút gọn ra danh sách bệnh nhân duy nhất
             const map = new Map();
@@ -145,6 +176,7 @@ export default function NoiSoi() {
                         gender: p.gender,
                         phone_number: p.phone_number,
                         address: p.address, // nếu muốn hiện address, cần BE trả thêm; tạm lấy từ patients endpoint nếu cần
+                        created_at: p.created_at || p.createdAt || null,
                     });
                 }
             }
@@ -167,6 +199,7 @@ export default function NoiSoi() {
                             gender: p.gender,
                             phone_number: p.phone_number,
                             address: p.address || '',
+                            created_at: p.created_at || p.createdAt || null,
                             primary_disease_code: p.primary_disease_code || null,
                         });
                     }
@@ -176,8 +209,13 @@ export default function NoiSoi() {
                 console.warn('Fetch patients fallback error:', errP);
             }
 
-            // Lọc tiếp client theo keyword (nếu có)
+            // Lọc tiếp client theo id (exact match) as a fallback, then keyword
             let tableData = Array.from(map.values());
+            if (searchId) {
+                const sid = String(searchId).trim();
+                tableData = tableData.filter(item => String(item.id_patient) === sid);
+                console.debug('[ENDO] Applied client-side id filter, remaining rows:', tableData.length, 'searchId:', sid);
+            }
             if (searchKeyword) {
                 const kw = searchKeyword.toLowerCase();
                 tableData = tableData.filter(item =>
@@ -197,7 +235,7 @@ export default function NoiSoi() {
         } finally {
             setLoading(false);
         }
-    }, [buildQueryParams, searchKeyword]);
+    }, [buildQueryParams, searchKeyword, pageSize]);
 
     useEffect(() => {
         fetchPatients();
@@ -299,6 +337,49 @@ export default function NoiSoi() {
         reader.readAsDataURL(file);
     });
 
+    // Infer mime type from base64 header or fallback to file.type
+    const inferMimeFromBase64 = (base64, fallback) => {
+        if (!base64) return fallback || 'application/octet-stream';
+        if (base64.startsWith('/9j/')) return 'image/jpeg'; // jpg
+        if (base64.startsWith('iVBOR')) return 'image/png'; // png
+        if (base64.startsWith('R0lGOD')) return 'image/gif'; // gif
+        if (base64.startsWith('UklGR')) return 'image/webp'; // webp
+        if (base64.startsWith('Qk')) return 'image/bmp'; // bmp
+        // fallback
+        return fallback || 'application/octet-stream';
+    };
+
+    const extFromMime = (mime) => {
+        if (!mime) return '';
+        if (mime.includes('jpeg') || mime.includes('jpg')) return '.jpg';
+        if (mime.includes('png')) return '.png';
+        if (mime.includes('gif')) return '.gif';
+        if (mime.includes('webp')) return '.webp';
+        if (mime.includes('bmp')) return '.bmp';
+        return '';
+    };
+
+    const sanitizeFilename = (name, mime, base64) => {
+        if (!name) name = 'file';
+        // split extension
+        const lastDot = name.lastIndexOf('.');
+        let base = name;
+        let ext = '';
+        if (lastDot > 0) {
+            base = name.slice(0, lastDot);
+            ext = name.slice(lastDot);
+        }
+        // replace unsafe chars
+        base = base.replace(/[^a-zA-Z0-9-_ ]/g, '_').trim();
+        if (base.length > 80) base = base.slice(0, 80);
+        // ensure extension exists
+        if (!ext) {
+            const inferredMime = inferMimeFromBase64(base64, mime);
+            ext = extFromMime(inferredMime) || '';
+        }
+        return `${base}${ext}`;
+    };
+
     const handleUpload = async ({ file, onSuccess, onError }) => {
         if (!selectedPatient) {
             onError && onError(new Error('Không có bệnh nhân được chọn'));
@@ -307,10 +388,16 @@ export default function NoiSoi() {
 
         try {
             const fileData = await readFileAsBase64(file);
+            const mime = inferMimeFromBase64(fileData, file.type || 'application/octet-stream');
+            const safeName = sanitizeFilename(file.name, mime, fileData);
+            const dataUri = `data:${mime};base64,${fileData}`;
             const payload = {
                 id_patient: selectedPatient,
-                filename: file.name,
+                filename: safeName,
+                original_filename: file.name,
+                file_mime: mime,
                 file_data: fileData,
+                file_data_uri: dataUri,
                 disease_code: DISEASE_CODE,
             };
 
@@ -342,10 +429,16 @@ export default function NoiSoi() {
 
         try {
             const fileData = await readFileAsBase64(file);
+            const mime = inferMimeFromBase64(fileData, file.type || 'application/octet-stream');
+            const safeName = sanitizeFilename(file.name, mime, fileData);
+            const dataUri = `data:${mime};base64,${fileData}`;
             const payload = {
                 id_patient,
-                filename: file.name,
+                filename: safeName,
+                original_filename: file.name,
+                file_mime: mime,
                 file_data: fileData,
+                file_data_uri: dataUri,
                 disease_code: DISEASE_CODE,
             };
 
@@ -353,7 +446,7 @@ export default function NoiSoi() {
             message.success(`Tải ảnh cho ${id_patient} thành công`);
             onSuccess && onSuccess(null);
             // refresh list and current images if modal open
-            fetchPatients();
+            fetchPatients(page, pageSize);
             if (imageModal && selectedPatient === id_patient) {
                 handleViewImages(id_patient);
             }
@@ -367,6 +460,15 @@ export default function NoiSoi() {
             }
             onError && onError(err);
         }
+    };
+
+    // table pagination handler
+    const handleTableChange = (pagination) => {
+        const current = pagination?.current || 1;
+        const ps = pagination?.pageSize || pageSize;
+        setPage(current);
+        setPageSize(ps);
+        fetchPatients(current, ps);
     };
 
     // Delete an image: try multiple backend contracts (by id, or by filename + id_patient)
@@ -512,17 +614,7 @@ export default function NoiSoi() {
                     <DatePicker style={{ width: 140 }} value={toDate} onChange={onChangeTo} />
                 </div>
                 <div>
-                    <span>Phòng khám&nbsp;</span>
-                    <Select
-                        placeholder="Chọn..."
-                        style={{ width: 160 }}
-                        value={clinic}
-                        onChange={setClinic}
-                        options={[
-                            // Tuỳ backend: thêm options thật nếu có
-                            // { value: 'A', label: 'Phòng khám A' },
-                        ]}
-                    />
+
                 </div>
                 <div>
                     <span>Từ khóa (F3)&nbsp;</span>
@@ -581,7 +673,14 @@ export default function NoiSoi() {
                 columns={columns}
                 dataSource={rows}
                 loading={loading}
-                pagination={false}
+                pagination={{
+                    current: page,
+                    pageSize,
+                    total,
+                    showSizeChanger: true,
+                    pageSizeOptions: ['10', '20', '50', '100'],
+                }}
+                onChange={handleTableChange}
                 style={{ marginTop: 0 }}
                 locale={{
                     emptyText: (
@@ -809,4 +908,4 @@ export default function NoiSoi() {
             </Modal>
         </div>
     );
-}
+};

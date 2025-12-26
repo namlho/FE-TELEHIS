@@ -10,14 +10,14 @@ const Home = lazy(() => import("../components/Home/Home"));
 // Các dịch vụ cận lâm sàng (có thể tạo component riêng cho từng dịch vụ nếu muốn)
 const XetNghiem = lazy(() => import("../components/CanLamSang/XetNghiem"));
 const SieuAm = lazy(() => import("../components/CanLamSang/SieuAm"));
-const NoiSoi = lazy(() => import("../components/CanLamSang/NoiSoi/NoiSoi"));
+const NoiSoi = lazy(() => import("../components/CanLamSang/NoiSoi/NoiSoi.jsx"));
 const XQuang = lazy(() => import("../components/CanLamSang/XQuang"));
 const CT = lazy(() => import("../components/CanLamSang/CT"));
 const MRI = lazy(() => import("../components/CanLamSang/MRI"));
-const ECG = lazy(() => import("../components/CanLamSang/ECG/ECG"));
+const ECG = lazy(() => import("../components/CanLamSang/ECG/ECG.jsx"));
 const ThuThuat = lazy(() => import("../components/CanLamSang/ThuThuat"));
 const PhauThuat = lazy(() => import("../components/CanLamSang/PhauThuat"));
-const SuongKhop = lazy(() => import("../components/CanLamSang/XuongKhop/XuongKhop"));
+const SuongKhop = lazy(() => import("../components/CanLamSang/XuongKhop/XuongKhop.jsx"));
 
 const AdminUsers = lazy(() => import("../components/Admin/AdminUsers"));
 

@@ -23,6 +23,9 @@ export default function XuongKhop() {
     const [rows, setRows] = useState([]);              // dữ liệu bảng bệnh nhân (đã unique theo id_patient)
     const [rawImages, setRawImages] = useState([]);    // dữ liệu ảnh MSK (để tính toán nhanh)
     const [loading, setLoading] = useState(false);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(20);
+    const [total, setTotal] = useState(0);
 
     const [imageModal, setImageModal] = useState(false);
     const [imageLoading, setImageLoading] = useState(false);
@@ -63,6 +66,13 @@ export default function XuongKhop() {
         { title: 'Giới tính', dataIndex: 'gender', key: 'gender', width: 100 },
         { title: 'SĐT', dataIndex: 'phone_number', key: 'phone_number', width: 140 },
         { title: 'Địa chỉ', dataIndex: 'address', key: 'address' },
+        {
+            title: 'Ngày tạo',
+            dataIndex: 'created_at',
+            key: 'created_at',
+            width: 200,
+            render: (val) => val ? dayjs(val).format('HH:mm DD/MM/YYYY') : ''
+        },
         {
             title: 'Thao tác',
             key: 'thaoTac',
@@ -106,24 +116,33 @@ export default function XuongKhop() {
     ]), []);
 
     // Build params cho API /images
-    const buildQueryParams = useCallback(() => {
+    const buildQueryParams = useCallback((p = page, ps = pageSize) => {
         const params = {
-            disease_code: DISEASE_CODE,      // chỉ lấy ảnh Xương khớp
-            page: 1,
-            page_size: 500,                  // đủ lớn cho danh sách hiện tại; có thể thêm phân trang nếu dữ liệu rất lớn
+            disease_code: DISEASE_CODE,
+            page: p,
+            page_size: ps,
         };
         if (searchId) params.id_patient = searchId.trim();
-        if (fromDate) params.from = dayjs(fromDate).toISOString();
-        if (toDate) params.to = dayjs(toDate).endOf('day').toISOString();
-        // nếu mai sau BE hỗ trợ phòng khám thì thêm params.clinic = clinic
+        if (fromDate) {
+            const fromIso = dayjs(fromDate).toISOString();
+            params.from = fromIso;
+            params.from_date = dayjs(fromDate).format('YYYY-MM-DD');
+            params.from_ts = dayjs(fromDate).startOf('day').valueOf();
+        }
+        if (toDate) {
+            const toIso = dayjs(toDate).endOf('day').toISOString();
+            params.to = toIso;
+            params.to_date = dayjs(toDate).format('YYYY-MM-DD');
+            params.to_ts = dayjs(toDate).endOf('day').valueOf();
+        }
         return params;
-    }, [searchId, fromDate, toDate /*, clinic*/]);
+    }, [searchId, fromDate, toDate, page, pageSize]);
 
     // Lấy danh sách ảnh ENDO và rút gọn thành danh sách bệnh nhân duy nhất
-    const fetchPatients = useCallback(async () => {
+    const fetchPatients = useCallback(async (p = page, ps = pageSize) => {
         setLoading(true);
         try {
-            const params = buildQueryParams();
+            const params = buildQueryParams(p, ps);
             console.debug('[MSK] fetchPatients - params ->', params);
             const res = await axios.get(`${BASE_URL}/images`, { params });
             console.debug('[MSK] fetchPatients - response status:', res.status);
@@ -133,21 +152,24 @@ export default function XuongKhop() {
 
             // Lưu raw ảnh (đã là ENDO)
             setRawImages(data);
+            const totalCount = res.data?.total ?? res.data?.meta?.total ?? (res.headers && (res.headers['x-total-count'] ? parseInt(res.headers['x-total-count'], 10) : undefined)) ?? 0;
+            setTotal(Number(totalCount || 0));
 
             // Rút gọn ra danh sách bệnh nhân duy nhất
             const map = new Map();
             for (const row of data) {
-                const p = row.patients; // đã có nhờ select trong images.controller
-                if (!p) continue;
-                if (!map.has(p.id_patient)) {
-                    map.set(p.id_patient, {
-                        key: p.id_patient,
-                        id_patient: p.id_patient,
-                        full_name: p.full_name,
-                        dob: p.dob,
-                        gender: p.gender,
-                        phone_number: p.phone_number,
-                        address: p.address, // nếu muốn hiện address, cần BE trả thêm; tạm lấy từ patients endpoint nếu cần
+                const pRow = row.patients; // đã có nhờ select trong images.controller
+                if (!pRow) continue;
+                if (!map.has(pRow.id_patient)) {
+                    map.set(pRow.id_patient, {
+                        key: pRow.id_patient,
+                        id_patient: pRow.id_patient,
+                        full_name: pRow.full_name,
+                        dob: pRow.dob,
+                        gender: pRow.gender,
+                        phone_number: pRow.phone_number,
+                        address: pRow.address, // nếu muốn hiện address, cần BE trả thêm; tạm lấy từ patients endpoint nếu cần
+                        created_at: pRow.created_at || pRow.createdAt || null,
                     });
                 }
             }
@@ -156,21 +178,22 @@ export default function XuongKhop() {
             try {
                 const pRes = await axios.get(`${BASE_URL}/patients`, { params: { page: 1, page_size: 500 } });
                 const pList = Array.isArray(pRes.data?.data) ? pRes.data.data : (Array.isArray(pRes.data) ? pRes.data : []);
-                for (const p of pList) {
-                    if (!p || !p.id_patient) continue;
+                for (const pItem of pList) {
+                    if (!pItem || !pItem.id_patient) continue;
                     // Only add patients relevant to MSK: either primary_disease_code === MSK or their image_storage contains MSK
-                    const hasEndoPrimary = p.primary_disease_code === DISEASE_CODE;
-                    const hasEndoInStorage = Array.isArray(p.image_storage) && p.image_storage.some(s => s.disease_code === DISEASE_CODE || s.diseases?.code === DISEASE_CODE);
-                    if (!map.has(p.id_patient) && (hasEndoPrimary || hasEndoInStorage)) {
-                        map.set(p.id_patient, {
-                            key: p.id_patient,
-                            id_patient: p.id_patient,
-                            full_name: p.full_name,
-                            dob: p.dob,
-                            gender: p.gender,
-                            phone_number: p.phone_number,
-                            address: p.address || '',
-                            primary_disease_code: p.primary_disease_code || null,
+                    const hasEndoPrimary = pItem.primary_disease_code === DISEASE_CODE;
+                    const hasEndoInStorage = Array.isArray(pItem.image_storage) && pItem.image_storage.some(s => s.disease_code === DISEASE_CODE || s.diseases?.code === DISEASE_CODE);
+                    if (!map.has(pItem.id_patient) && (hasEndoPrimary || hasEndoInStorage)) {
+                        map.set(pItem.id_patient, {
+                            key: pItem.id_patient,
+                            id_patient: pItem.id_patient,
+                            full_name: pItem.full_name,
+                            dob: pItem.dob,
+                            gender: pItem.gender,
+                            phone_number: pItem.phone_number,
+                            address: pItem.address || '',
+                            primary_disease_code: pItem.primary_disease_code || null,
+                            created_at: pItem.created_at || pItem.createdAt || null,
                         });
                     }
                 }
@@ -207,6 +230,14 @@ export default function XuongKhop() {
             setLoading(false);
         }
     }, [buildQueryParams, searchKeyword]);
+
+    const handleTableChange = (pagination) => {
+        const nextPage = pagination?.current || 1;
+        const nextSize = pagination?.pageSize || pageSize;
+        setPage(nextPage);
+        setPageSize(nextSize);
+        fetchPatients(nextPage, nextSize);
+    };
 
     useEffect(() => {
         fetchPatients();
@@ -567,17 +598,6 @@ export default function XuongKhop() {
                     <DatePicker style={{ width: 140 }} value={toDate} onChange={onChangeTo} />
                 </div>
                 <div>
-                    <span>Phòng khám&nbsp;</span>
-                    <Select
-                        placeholder="Chọn..."
-                        style={{ width: 160 }}
-                        value={clinic}
-                        onChange={setClinic}
-                        options={[
-                            // Tuỳ backend: thêm options thật nếu có
-                            // { value: 'A', label: 'Phòng khám A' },
-                        ]}
-                    />
                 </div>
                 <div>
                     <span>Từ khóa (F3)&nbsp;</span>
@@ -636,7 +656,8 @@ export default function XuongKhop() {
                 columns={columns}
                 dataSource={rows}
                 loading={loading}
-                pagination={false}
+                pagination={{ current: page, pageSize, total, showSizeChanger: true, pageSizeOptions: ['10', '20', '50', '100'] }}
+                onChange={handleTableChange}
                 style={{ marginTop: 0 }}
                 locale={{
                     emptyText: (
